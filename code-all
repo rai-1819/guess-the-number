@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Guessing Game</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #6e7e85, #b0c4de);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+            box-sizing: border-box;
+        }
+
+        .game-container {
+            text-align: center;
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 350px;
+            transition: all 0.3s ease;
+        }
+
+        .game-container:hover {
+            transform: translateY(-10px);
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 15px;
+            color: #4CAF50;
+        }
+
+        p {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+
+        input {
+            padding: 12px;
+            width: 90%;
+            margin: 15px 0;
+            border: 2px solid #4CAF50;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #2E8B57;
+            outline: none;
+        }
+
+        button {
+            padding: 12px 25px;
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+            transform: scale(1.1);
+        }
+
+        #feedback {
+            font-weight: bold;
+            color: #ff6347;
+            font-size: 18px;
+        }
+
+        #attempts {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .failed-attempts {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #ff4500;
+            font-weight: bold;
+            word-wrap: break-word;
+        }
+
+        #range {
+            font-size: 18px;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            animation: slideIn 0.5s ease-in-out forwards;
+        }
+
+        .modal-content h2 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+
+        .modal-content p {
+            color: #333;
+            font-size: 18px;
+            margin: 5px 0;
+        }
+
+        .modal-content a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+
+        .modal-content button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #ff6347;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .modal-content button:hover {
+            background-color: #ff4500;
+        }
+
+        @keyframes slideIn {
+            0% {
+                transform: translateY(-100%);
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        /* Button in the top right corner after closing modal */
+        #showModalButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            display: none; /* Hidden by default */
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        #showModalButton:hover {
+            background-color: #45a049;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Welcome to the Number Guessing Game!</h1>
+        <p>I'm thinking of a number between <span id="lowRange">1</span> and <span id="highRange">100</span>.</p>
+        <input type="number" id="guessInput" placeholder="Enter your guess" />
+        <button onclick="checkGuess()">Guess!</button>
+        <p id="feedback"></p>
+        <p id="attempts"></p>
+        <div id="failedAttempts" class="failed-attempts"></div>
+        <div id="range"></div>
+    </div>
+
+    <!-- Modal for personal info -->
+    <div id="personalModal" class="modal">
+        <div class="modal-content">
+            <h2>About Me</h2>
+            <p>Hi, I'm <strong>RAI SINGH</strong>!</p>
+            <p>Check out my profiles:</p>
+            <p><a href="https://github.com/rai-1819" target="_blank">GitHub</a></p>
+            <p><a href="https://www.linkedin.com/in/rai-singh-2246b1270/" target="_blank">LinkedIn</a></p>
+            <button onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Button to show modal again -->
+    <button id="showModalButton" onclick="openModal()">Show My Info</button>
+
+    <script>
+        // Initialize the game
+        let numberToGuess = Math.floor(Math.random() * 100) + 1; // Random number between 1 and 100
+        let numberOfTries = 0;
+        let failedGuesses = [];
+        let lowerBound = 1;
+        let upperBound = 100;
+
+        function checkGuess() {
+            const userGuess = parseInt(document.getElementById('guessInput').value); // Get user input
+            const feedbackElement = document.getElementById('feedback');
+            const attemptsElement = document.getElementById('attempts');
+            const failedAttemptsElement = document.getElementById('failedAttempts');
+            const lowRangeElement = document.getElementById('lowRange');
+            const highRangeElement = document.getElementById('highRange');
+            const rangeElement = document.getElementById('range');
+
+            if (isNaN(userGuess) || userGuess < lowerBound || userGuess > upperBound) {
+                feedbackElement.textContent = `Please enter a number between ${lowerBound} and ${upperBound}!`;
+                feedbackElement.style.color = "red";
+                return;
+            }
+
+            numberOfTries++; // Increment number of attempts
+            failedGuesses.push(userGuess); // Store failed guess
+            failedAttemptsElement.textContent = `Failed Attempts: ${failedGuesses.join(", ")}`; // Show failed guesses
+
+            // Adjust range based on the guess
+            if (userGuess < numberToGuess) {
+                lowerBound = Math.max(lowerBound, userGuess + 1); // Increase the lower bound
+                feedbackElement.textContent = "Too low! Try again.";
+                feedbackElement.style.color = "red";
+            } else if (userGuess > numberToGuess) {
+                upperBound = Math.min(upperBound, userGuess - 1); // Decrease the upper bound
+                feedbackElement.textContent = "Too high! Try again.";
+                feedbackElement.style.color = "red";
+            } else {
+                feedbackElement.textContent = `Congrats! You've guessed the number in ${numberOfTries} tries!`;
+                feedbackElement.style.color = "green";
+                attemptsElement.textContent = `It took you ${numberOfTries} tries.`;
+            }
+
+            // Update the range display
+            lowRangeElement.textContent = lowerBound;
+            highRangeElement.textContent = upperBound;
+            rangeElement.textContent = `New range: ${lowerBound} - ${upperBound}`;
+        }
+
+        // Show the modal on page load
+        window.onload = function() {
+            const modal = document.getElementById('personalModal');
+            setTimeout(function() {
+                modal.style.display = "flex";
+                modal.style.opacity = 1;
+            }, 1000); // Delay the modal to show after 1 second
+        };
+
+        // Open modal from button
+        function openModal() {
+            const modal = document.getElementById('personalModal');
+            modal.style.display = "flex";
+            modal.style.opacity = 1;
+            document.getElementById('showModalButton').style.display = "none"; // Hide button when modal is open
+        }
+
+        // Close modal function
+        function closeModal() {
+            const modal = document.getElementById('personalModal');
+            modal.style.opacity = 0;
+            setTimeout(function() {
+                modal.style.display = "none";
+                document.getElementById('showModalButton').style.display = "inline-block"; // Show button again after modal is closed
+            }, 300); // Match the fade-out animation duration
+        }
+    </script>
+</body>
+</html>
